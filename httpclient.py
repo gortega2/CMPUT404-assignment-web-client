@@ -33,7 +33,11 @@ class HTTPResponse(object):
         self.body = body
 
 class HTTPClient(object):
-    #def get_host_port(self,url):
+    def get_host_port(self,port):
+        if port != None:
+            return int(port)
+        else:
+            return 80
 
     def connect(self, host, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -41,13 +45,40 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        return None
+        pattern = r'HTTP/[\d.]+ ([\d]+)'
+        result = re.search(pattern, data)
+        if result != None:
+            return result.group(1)
+        else:
+            return None
 
     def get_headers(self,data):
-        return None
+        pattern = r"([\w\s\W]+)\r\n\r\n"
+        result = re.search(pattern, data)
+        if result != None:
+            return result.group(1)
+        else:
+            return None
 
     def get_body(self, data):
-        return None
+        pattern = r"\r\n\r\n([\w\W\s]+)"
+        result = re.search(pattern, data)
+        if result != None:
+            return result.group(1)
+        else:
+            return None
+
+    def check_redirect(self, data):
+        pattern = r"Location: ([\w\S]+)"
+        print("??????????????????????????????????????????????????????????")
+        result = re.search(pattern, data)
+        print(result)
+        if result != None:
+            print(result.group(1))
+            return result.group(1)
+        else:
+            return None
+
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -70,11 +101,64 @@ class HTTPClient(object):
     def GET(self, url, args=None):
         code = 500
         body = ""
+        query = urllib.parse.urlparse(url)
+        port = self.get_host_port(query.port)
+        #print("PRinting POrt: ", query.port)
+        print("GET URL is: ", url)
+        print("args is: ", args)
+        print(query.path)
+        #query = urllib.parse(args)
+        msg = self.create_msg("GET", query.path, query.hostname)
+        #print(body)
+        #print("Attemption to connect to {}".format(query.hostname))
+        self.connect(query.hostname, port)
+        #print("Attempting to send data")
+        self.sendall(msg)
+        #print("Attempting to recieve data")
+        data = self.recvall(self.socket)
+        #print(data)
+        #print("Attempting to close socket")
+        self.close()
+        print("Printing data: ",data)
+        code = int(self.get_code(data))
+        print("HTTP CODE IS:", code)
+        headers = self.get_headers(data)
+        #print(headers)
+        #print("Printing HTTP Headers: \n", self.get_headers(data))
+        #print("Print HTTP Response Body: \n", self.get_body(data))
+        body = self.get_body(data)
+        #print(body)
+        print("\r\n")
+        '''
+        redirect = self.check_redirect(self.get_headers(data))
+        print(redirect)
+        if redirect != None:
+            print("REDIRECTING TO NEW URL: ", redirect)
+            return self.GET(redirect, args)
+        '''    
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
         code = 500
         body = ""
+        query = urllib.parse.urlparse(url)
+        port = self.get_host_port(query.port)
+        print("POST URL is: ", url)
+        print("args is: ", args)
+        msg = self.create_msg("POST", query.path, query.hostname)
+        self.connect(query.hostname, port)
+        self.sendall(msg)
+        data = self.recvall(self.socket)
+        self.close()
+        print("Printing POST data: \n", data)
+        code = int(self.get_code(data))
+        print(code)
+        #print("---TEST---")
+        #print(args)
+        #print(query.path)
+        #data = "POST " + str(query.gethost())
+        print("\r\n")
+
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
@@ -83,6 +167,13 @@ class HTTPClient(object):
         else:
             return self.GET( url, args )
     
+    def create_msg(self, command, path, host):
+        data = command + " " + path + " HTTP/1.1\r\n"
+        data += "Host: " + host + '\r\n'
+        data += "Connection: close\r\n"
+        data += "Accept: text/html\r\n\r\n"
+        return data
+
 if __name__ == "__main__":
     client = HTTPClient()
     command = "GET"
@@ -90,6 +181,10 @@ if __name__ == "__main__":
         help()
         sys.exit(1)
     elif (len(sys.argv) == 3):
+        for x in sys.argv:
+            print("printing argvs", x)
         print(client.command( sys.argv[2], sys.argv[1] ))
     else:
+        for x in sys.argv:
+            print("printing argvs", x)
         print(client.command( sys.argv[1] ))
