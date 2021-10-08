@@ -101,6 +101,7 @@ class HTTPClient(object):
         code = int(self.get_code(data))
         headers = self.get_headers(data)
         body = self.get_body(data)
+        #print(code, data)
         print(code, body)
         return HTTPResponse(code, body)
 
@@ -116,6 +117,7 @@ class HTTPClient(object):
         self.close()
         code = int(self.get_code(data))
         body = self.get_body(data)
+        #print(code, data)
         print(code, body)
         return HTTPResponse(code, body)
 
