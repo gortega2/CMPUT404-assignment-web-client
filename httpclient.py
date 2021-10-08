@@ -23,7 +23,6 @@ import socket
 import re
 # you may use urllib to encode data appropriately
 import urllib.parse
-import json
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
