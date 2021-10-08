@@ -69,20 +69,9 @@ class HTTPClient(object):
         else:
             return None #MIght change to None later
 
-    def check_redirect(self, data):
-        pattern = r"Location: ([\w\S]+)"
-        #print("??????????????????????????????????????????????????????????")
-        result = re.search(pattern, data)
-        #print(result)
-        if result != None:
-            #print(result.group(1))
-            return result.group(1)
-        else:
-            return None
 
     
     def sendall(self, data):
-        print(data.encode('utf-8'))
         self.socket.sendall(data.encode('utf-8'))
         
     def close(self):
@@ -105,40 +94,15 @@ class HTTPClient(object):
         body = ""
         query = urllib.parse.urlparse(url)
         port = self.get_host_port(query.port)
-        #print("PRinting POrt: ", query.port)
-        #print("GET URL is: ", url)
-        #print("args is: ", args)
-        #print(type(query.path))
-        #query = urllib.parse(args)
         msg = self.create_msg("GET", query.path, query.hostname, args=args)
-        #print(msg)
-        #print(body)
-        #print("Attemption to connect to {}".format(query.hostname))
         self.connect(query.hostname, port)
-        #print("Attempting to send data")
         self.sendall(msg)
-        #print("Attempting to recieve data")
         data = self.recvall(self.socket)
-        #print(data)
-        #print("Attempting to close socket")
         self.close()
-        #print("Printing data: ",data)
         code = int(self.get_code(data))
-        #print("HTTP CODE IS:", code)
         headers = self.get_headers(data)
-        #print(headers)
-        #print("Printing HTTP Headers: \n", self.get_headers(data))
-        #print("Print HTTP Response Body: \n", self.get_body(data))
         body = self.get_body(data)
-        #print(body)
-        #print("\r\n")
-        '''
-        redirect = self.check_redirect(self.get_headers(data))
-        print(redirect)
-        if redirect != None:
-            print("REDIRECTING TO NEW URL: ", redirect)
-            return self.GET(redirect, args)
-        '''    
+        print(code, body)
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
@@ -146,27 +110,14 @@ class HTTPClient(object):
         body = ""
         query = urllib.parse.urlparse(url)
         port = self.get_host_port(query.port)
-        #print("POST URL is: ", url)
-        print("args is: ", args)
-        print(type(args))
         msg = self.create_msg("POST", query.path, query.hostname, args=args)
-        print("Printing POST request: \n", msg)
         self.connect(query.hostname, port)
         self.sendall(msg)
         data = self.recvall(self.socket)
         self.close()
-        print("Printing POST data: \n", data)
         code = int(self.get_code(data))
         body = self.get_body(data)
-        #print(code)
-        print("Printing POST response body: ", body)
-        #print(type(body))
-        #print("---TEST---")
-        #print(args)
-        #print(query.path)
-        #data = "POST " + str(query.gethost())
-        #print("\r\n")
-
+        print(code, body)
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
@@ -181,21 +132,22 @@ class HTTPClient(object):
         data = command + " " + path + " HTTP/1.1\r\n"
         data += "Host: " + host + '\r\n'
         length = 0
-        body_list = []
         body = ''
         if command == 'GET':
+            if args!= None:
+                query = urllib.parse.urlencode(args)
+                if "?" in path:
+                    path = path + '&' + str(query)
+                else:
+                    path = path + '?' + str(query)
+                data = command + " " + path + " HTTP/1.1\r\n"
+                data += "Host: " + host + '\r\n' 
+
             data += "Connection: close\r\n"
-            data += "Accept: */*\r\n\r\n"
+            data += "Accept: text/html\r\n\r\n"
         else:
             data += "Content-type: application/x-www-form-urlencoded\r\n"
             if args != None:
-                
-                #for key, value in args.items():
-                    #string = '{}={}'.format(key,value)
-                    #body_list.append(string)
-                #body = '&'.join(body_list)
-                #body = urllib.parse.quote_plus(body)
-                #print(body)
                 body = urllib.parse.urlencode(args)
                 length = len(body.encode('utf-8'))
             data += "Content-length: {}{}".format(length,'\r\n\r\n')
