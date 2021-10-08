@@ -190,12 +190,13 @@ class HTTPClient(object):
             data += "Content-type: application/x-www-form-urlencoded\r\n"
             if args != None:
                 
-                for key, value in args.items():
-                    string = '{}={}'.format(key,value)
-                    body_list.append(string)
-                body = '&'.join(body_list)
+                #for key, value in args.items():
+                    #string = '{}={}'.format(key,value)
+                    #body_list.append(string)
+                #body = '&'.join(body_list)
                 #body = urllib.parse.quote_plus(body)
                 #print(body)
+                body = urllib.parse.urlencode(args)
                 length = len(body.encode('utf-8'))
             data += "Content-length: {}{}".format(length,'\r\n\r\n')
             data += body
