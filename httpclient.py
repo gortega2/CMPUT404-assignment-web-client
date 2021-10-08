@@ -23,6 +23,7 @@ import socket
 import re
 # you may use urllib to encode data appropriately
 import urllib.parse
+import json
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
@@ -70,11 +71,11 @@ class HTTPClient(object):
 
     def check_redirect(self, data):
         pattern = r"Location: ([\w\S]+)"
-        print("??????????????????????????????????????????????????????????")
+        #print("??????????????????????????????????????????????????????????")
         result = re.search(pattern, data)
-        print(result)
+        #print(result)
         if result != None:
-            print(result.group(1))
+            #print(result.group(1))
             return result.group(1)
         else:
             return None
@@ -105,12 +106,12 @@ class HTTPClient(object):
         query = urllib.parse.urlparse(url)
         port = self.get_host_port(query.port)
         #print("PRinting POrt: ", query.port)
-        print("GET URL is: ", url)
-        print("args is: ", args)
-        print(type(query.path))
+        #print("GET URL is: ", url)
+        #print("args is: ", args)
+        #print(type(query.path))
         #query = urllib.parse(args)
         msg = self.create_msg("GET", query.path, query.hostname, args=args)
-        print(msg)
+        #print(msg)
         #print(body)
         #print("Attemption to connect to {}".format(query.hostname))
         self.connect(query.hostname, port)
@@ -121,16 +122,16 @@ class HTTPClient(object):
         #print(data)
         #print("Attempting to close socket")
         self.close()
-        print("Printing data: ",data)
+        #print("Printing data: ",data)
         code = int(self.get_code(data))
-        print("HTTP CODE IS:", code)
+        #print("HTTP CODE IS:", code)
         headers = self.get_headers(data)
         #print(headers)
         #print("Printing HTTP Headers: \n", self.get_headers(data))
         #print("Print HTTP Response Body: \n", self.get_body(data))
         body = self.get_body(data)
         #print(body)
-        print("\r\n")
+        #print("\r\n")
         '''
         redirect = self.check_redirect(self.get_headers(data))
         print(redirect)
@@ -145,8 +146,9 @@ class HTTPClient(object):
         body = ""
         query = urllib.parse.urlparse(url)
         port = self.get_host_port(query.port)
-        print("POST URL is: ", url)
+        #print("POST URL is: ", url)
         print("args is: ", args)
+        print(type(args))
         msg = self.create_msg("POST", query.path, query.hostname, args=args)
         print("Printing POST request: \n", msg)
         self.connect(query.hostname, port)
@@ -156,14 +158,14 @@ class HTTPClient(object):
         print("Printing POST data: \n", data)
         code = int(self.get_code(data))
         body = self.get_body(data)
-        print(code)
+        #print(code)
         print("Printing POST response body: ", body)
-        print(type(body))
+        #print(type(body))
         #print("---TEST---")
         #print(args)
         #print(query.path)
         #data = "POST " + str(query.gethost())
-        print("\r\n")
+        #print("\r\n")
 
         return HTTPResponse(code, body)
 
@@ -187,16 +189,20 @@ class HTTPClient(object):
         else:
             data += "Content-type: application/x-www-form-urlencoded\r\n"
             if args != None:
+                
                 for key, value in args.items():
                     string = '{}={}'.format(key,value)
                     body_list.append(string)
                 body = '&'.join(body_list)
-                body = urllib.parse.quote_plus(body)
-                print(body)
+                #body = urllib.parse.quote_plus(body)
+                #print(body)
                 length = len(body.encode('utf-8'))
             data += "Content-length: {}{}".format(length,'\r\n\r\n')
             data += body
         return data
+
+    def create_post_body(self, request_body, application_type):
+        return
 
 if __name__ == "__main__":
     client = HTTPClient()
